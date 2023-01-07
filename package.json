@@ -1,6 +1,6 @@
 {
   "name": "browser-cookie-login",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "一个打开浏览器并登录获取cookie的小工具，一般用户命令行登录后自动化使用",
   "main": "dist/index.js",
   "scripts": {

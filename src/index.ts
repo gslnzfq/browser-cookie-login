@@ -59,7 +59,7 @@ const createServer = (opts: IOptions): Promise<Server> => {
  * 获取cookie的数据
  * @param options
  */
-export const getCookieValue = async (options: IOptions) => {
+export const getCookieValue = async (options: IOptions): Promise<string> => {
   // 合并配置
   const opts = {...defaultOption, ...options} as Required<IOptions>;
   return new Promise(async (resolve, reject) => {
