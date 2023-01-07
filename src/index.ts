@@ -1,4 +1,4 @@
-import { remote } from "webdriverio";
+import { Browser, remote } from "webdriverio";
 import * as http from "http";
 import { AddressInfo } from "net";
 import { RemoteCapability } from "@wdio/types/build/Capabilities";
@@ -32,13 +32,22 @@ export interface IOptions {
    * 浏览器配置，查看webdriverio文档
    */
   capabilities?: RemoteCapability;
+  /**
+   * 处理响应的结果，获取到cookie后，在通过这个参数判断后返回true才算成功
+   * 因为有些跳转后会重定向到登录页面，登录域名下面有同名cookie会导致返回错误的cookie
+   * @param browser
+   */
+  resolveResult?: (browser: Browser<any>) => Promise<boolean>;
 }
 
 const defaultOption: Partial<IOptions> = {
   retryInterval: 1,
   successMessage: "你已经登录成功，浏览器即将关闭！",
   successShowDuration: 3,
-  capabilities: {browserName: "chrome"}
+  capabilities: {browserName: "chrome"},
+  resolveResult: async () => {
+    return true;
+  }
 };
 
 const createServer = (opts: IOptions): Promise<Server> => {
@@ -78,15 +87,18 @@ export const getCookieValue = async (options: IOptions): Promise<string> => {
           // 如果获取不到对应的cookie信息，会到catch
           const cookie = await browser.getNamedCookie(opts.cookieName);
           if (cookie.value) {
-            // 浏览器展示登录成功
-            await browser.navigateTo(`http://127.0.0.1:${port}/`);
-            // 展示三秒后关闭浏览器，关闭服务器
-            await sleep(opts.successShowDuration);
-            await browser.deleteSession();
-            await server.close();
-            // 返回结果
-            resolve(cookie.value);
-            break;
+            const resolved = await opts.resolveResult(browser);
+            if (resolved) {
+              // 浏览器展示登录成功
+              await browser.navigateTo(`http://127.0.0.1:${port}/`);
+              // 展示三秒后关闭浏览器，关闭服务器
+              await sleep(opts.successShowDuration);
+              await browser.deleteSession();
+              await server.close();
+              // 返回结果
+              resolve(cookie.value);
+              break;
+            }
           }
         } catch (err: any) {
           // 获取失败后，等待x秒再去获取

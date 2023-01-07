@@ -24,6 +24,10 @@ import { getCookieValue } from "browser-cookie-login";
 getCookieValue({
   cookieName: "user_session",
   url: "https://github.com/",
+  resolveResult: async (browser) => {
+    const url = await browser.getUrl();
+    return new URL(url).host === 'github.com';
+  }
 }).then(resp => {
   console.log("cookie：", resp);
 }).catch(error => {
@@ -61,6 +65,12 @@ export interface IOptions {
    * 浏览器配置，查看webdriverio文档
    */
   capabilities?: RemoteCapability;
+  /**
+   * 处理响应的结果，获取到cookie后，在通过这个参数判断后返回true才算成功
+   * 因为有些跳转后会重定向到登录页面，登录域名下面有同名cookie会导致返回错误的cookie
+   * @param browser
+   */
+  resolveResult?: (browser: Browser<any>) => Promise<boolean>;
 }
 ```
 
